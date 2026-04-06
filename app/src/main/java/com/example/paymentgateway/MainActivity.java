@@ -2,6 +2,7 @@ package com.example.paymentgateway;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import androidx.core.content.ContextCompat;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -111,10 +112,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(logReceiver, new IntentFilter("com.paymentgateway.LOG"));
-    }
+protected void onResume() {
+    super.onResume();
+    // Menggunakan ContextCompat agar kompatibel dengan aturan keamanan Android terbaru
+    ContextCompat.registerReceiver(
+            this, 
+            logReceiver, 
+            new IntentFilter("com.paymentgateway.LOG"), 
+            ContextCompat.RECEIVER_NOT_EXPORTED
+    );
+}
 
     @Override
     protected void onPause() {

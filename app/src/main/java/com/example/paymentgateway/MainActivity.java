@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     // Receiver untuk menangkap log dari Service
     private final BroadcastReceiver logReceiver = new BroadcastReceiver() {
         @Override
-        public void receive(Context context, Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             String logMessage = intent.getStringExtra("log");
             if (logMessage != null) {
                 appendLog(logMessage);

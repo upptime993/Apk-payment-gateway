@@ -26,44 +26,46 @@ public class NotificationReaderService extends NotificationListenerService {
     }
 
     @Override
-    public void onNotificationPosted(StatusBarNotification sbn) {
-        SharedPreferences prefs = getSharedPreferences("PaymentConfig", MODE_PRIVATE);
-        String targetPackage = prefs.getString("packageName", "com.shopee.id");
-        String regexPattern = prefs.getString("regex", "(?i)Rp\\s*([\\d\\.]+)");
+public void onNotificationPosted(StatusBarNotification sbn) {
+    SharedPreferences prefs = getSharedPreferences("PaymentConfig", MODE_PRIVATE);
+    String targetPackage = prefs.getString("packageName", "com.shopeepay.id");
+    String regexPattern = prefs.getString("regex", "(?i)Rp\\s*([\\d\\.]+)");
 
-        String currentPackage = sbn.getPackageName();
-        
-        // Hanya intip notifikasi dari target package
-        if (!currentPackage.equals(targetPackage)) return;
+    if (!sbn.getPackageName().equals(targetPackage)) return;
 
-        Notification notification = sbn.getNotification();
-        if (notification == null || notification.extras == null) return;
+    Notification notification = sbn.getNotification();
+    if (notification == null || notification.extras == null) return;
 
-        String text = notification.extras.getString(Notification.EXTRA_TEXT);
-        if (text == null) return;
+    // Ambil semua kemungkinan teks yang ada di notifikasi
+    CharSequence title = notification.extras.getCharSequence(Notification.EXTRA_TITLE);
+    CharSequence text = notification.extras.getCharSequence(Notification.EXTRA_TEXT);
+    CharSequence bigText = notification.extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
+    
+    // Gabungkan jadi satu string besar untuk diperiksa
+    String fullContent = (title != null ? title : "") + " " + 
+                         (text != null ? text : "") + " " + 
+                         (bigText != null ? bigText : "");
 
-        sendLogToUI("Notif " + targetPackage + " Masuk: " + text);
+    if (fullContent.trim().isEmpty()) return;
 
-        // Mulai mencocokkan teks dengan Regex buatanmu
-        Pattern pattern = Pattern.compile(regexPattern);
-        Matcher matcher = pattern.matcher(text);
+    sendLogToUI("Notif Masuk: " + fullContent);
 
-        if (matcher.find()) {
-            String nominalString = matcher.group(1).replace(".", ""); 
-            
-            try {
-                int nominalMasuk = Integer.parseInt(nominalString);
-                sendLogToUI("=> Ditemukan nominal: Rp" + nominalMasuk);
-                sendLogToUI("=> Mengirim data ke Vercel...");
-                sendWebhookToServer(nominalMasuk);
-                
-            } catch (NumberFormatException e) {
-                sendLogToUI("=> Error parsing nominal: " + nominalString);
-            }
-        } else {
-            sendLogToUI("=> Teks notif tidak cocok dengan Regex.");
+    Pattern pattern = Pattern.compile(regexPattern);
+    Matcher matcher = pattern.matcher(fullContent);
+
+    if (matcher.find()) {
+        String nominalString = matcher.group(1).replace(".", ""); 
+        try {
+            int nominalMasuk = Integer.parseInt(nominalString);
+            sendLogToUI("=> Ditemukan: Rp" + nominalMasuk);
+            sendWebhookToServer(nominalMasuk);
+        } catch (Exception e) {
+            sendLogToUI("=> Error parsing.");
         }
+    } else {
+        sendLogToUI("=> Regex tidak cocok dengan teks.");
     }
+}
 
     private void sendWebhookToServer(int nominal) {
         executor.execute(() -> {

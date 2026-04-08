@@ -2,7 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.paymentgateway">
 
+    <!-- Permission Internet untuk kirim data ke API -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Permission Foreground Service agar tidak di-kill sistem -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Untuk Android 14+ perlu deklarasi tipe foreground service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Permission Vibrate (opsional) -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -13,22 +22,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         android:usesCleartextTraffic="true">
-        
-        <activity android:name=".MainActivity" android:exported="true">
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- Notification Listener Service -->
+        <!-- FIX BUG #5: Tambah foregroundServiceType agar service tidak di-kill -->
         <service
             android:name=".NotificationReaderService"
             android:label="Bot Pendeteksi Saldo"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-            android:exported="true">
+            android:exported="true"
+            android:foregroundServiceType="dataSync">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
     </application>
+
 </manifest>
